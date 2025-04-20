@@ -21,3 +21,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+dat/IndexedDB_bili.json
+dat/IndexedDB_json.json
