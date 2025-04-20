@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         bilibili 视频合集标题搜索
 // @namespace    https://github.com/LesslsMore/bili-part-video-search
-// @version      0.0.1
+// @version      0.1.0
 // @author       lesslsmore
-// @description  bilibili 视频合集标题搜索
+// @description  bilibili 视频合集标题搜索, 分 P 搜索
 // @license      MIT
 // @icon         https://i0.hdslb.com/bfs/static/jinkela/long/images/favicon.ico
 // @match        https://space.bilibili.com/*
