@@ -1,17 +1,24 @@
 <template>
-  <el-form ref="searchObjRef" style="max-width: 600px" :model="searchObj" status-icon :rules="rules"
-           label-width="auto" class="demo-ruleForm">
+  <div style="display: flex; justify-content: center;">
+
+
+  <el-form ref="searchObjRef" style="max-width: 100%;" :model="searchObj" status-icon :rules="rules"
+           label-width="auto" class="demo-ruleForm" inline>
+    <el-form-item label="数据来源">
+      <el-select v-model="dataSource" placeholder="请选择" style="width: 100px">
+        <el-option label="index" value="index" />
+        <el-option label="mongo" value="mongo" />
+      </el-select>
+    </el-form-item>
     <el-form-item label="分段视频名称">
-      <el-input v-model="searchObj.name"/>
+      <el-input v-model="searchObj.name" @keyup.enter="fetchData"/>
     </el-form-item>
     <el-form-item>
-      <!-- <el-button type="primary" @click="submitForm(searchObjRef)">Submit</el-button>
-      <el-button @click="resetForm(searchObjRef)">Reset</el-button> -->
       <el-button type="primary" :icon="Search" size="mini" @click="fetchData()">搜索</el-button>
       <el-button :icon="Refresh" size="mini" @click="resetData">重置</el-button>
     </el-form-item>
   </el-form>
-
+</div>
 
   <el-table :data="tableData" border style="width: 100%" @sort-change="sort_data">
     <el-table-column
@@ -23,21 +30,15 @@
         :width="width * 10"
     />
 
-    <!--    <el-table-column sortable prop="name" label="name" width="100"-->
-    <!--                     :filters="[-->
-    <!--        { text: 'Home', value: 'Home' },-->
-    <!--        { text: 'Office', value: 'Office' },-->
-    <!--      ]"-->
-    <!--                     :filter-method="filterTag"-->
-    <!--                     filter-placement="bottom-end"-->
-    <!--    />-->
   </el-table>
 
-  <el-pagination v-model:current-page="currentPage4" v-model:page-size="pageSize4"
-                 :page-sizes="[10, 20, 50, 100, 200, 500, 1000]" :small="small" :disabled="disabled"
-                 :background="background"
-                 layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
-                 @current-change="handleCurrentChange"/>
+  <div style="display: flex; justify-content: center;">
+    <el-pagination v-model:current-page="currentPage4" v-model:page-size="pageSize4"
+                   :page-sizes="[10, 20, 50, 100, 200, 500, 1000]" :small="small" :disabled="disabled"
+                   :background="background"
+                   layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
+                   @current-change="handleCurrentChange"/>
+  </div>
 
 </template>
 
@@ -45,7 +46,8 @@
 
 import {reactive, ref} from 'vue'
 import {Delete, Edit, Search, Refresh, Share, Upload, Download} from '@element-plus/icons-vue'
-import {db_bili} from "@/utils/db/db.js";
+import {get_cids_items as get_cids_items_index} from "@/utils/db/db.js";
+import {get_cids_items as get_cids_items_mongo} from "@/api/bili.js";
 
 const searchObjRef = ref()
 
@@ -62,6 +64,8 @@ let searchObj = ref({
   bvid: '',
   part: '',
 })
+
+const dataSource = ref('index')
 
 let keys = ref(
     {
@@ -84,37 +88,16 @@ function sort_data({prop, order}) {
 }
 
 async function fetchData() {
-  tableData.value = await filter(searchObj.value.name, currentPage4.value, pageSize4.value)
+  if (dataSource.value === 'mongo') {
+    const res = await get_cids_items_mongo(searchObj.value.name, currentPage4.value, pageSize4.value)
+    tableData.value = res.data.data
+    total.value = res.data.total
+  } else if (dataSource.value ==='index')  {
+    let res = await get_cids_items_index(searchObj.value.name, currentPage4.value, pageSize4.value)
+    tableData.value = res.data
+    total.value = res.total
+  }
 }
-
-async function filter(word, page, limit) {
-  console.log(word)
-  const collection = db_bili.cids
-      .orderBy('view')
-      .filter(item => {
-        try {
-          return item.part.text.includes(word)
-        } catch (e) {
-          console.log(e)
-          console.log(item.part)
-        }
-      });
-  // console.log(collection)
-
-  const res = await collection.toArray();
-
-  total.value = res.length
-
-  const result = await collection.reverse().offset((page - 1) * limit).limit(limit).toArray();
-
-  console.log(result)
-  return result
-}
-
-
-// const submitForm = () => {
-//     fetchData()
-// }
 
 const small = ref(false)
 const background = ref(false)

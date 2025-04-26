@@ -70,6 +70,28 @@ async function import_db(file) {
     console.log(new Date())
 }
 
+async function get_cids_items(word, page, limit) {
+    console.log(word)
+    const collection = db_bili.cids
+        .orderBy('view')
+        .filter(item => {
+          try {
+            return item.part.text.includes(word)
+          } catch (e) {
+            console.log(e)
+            console.log(item.part)
+          }
+        });
+    // console.log(collection)
+    const res = await collection.toArray();
+    const result = await collection.reverse().offset((page - 1) * limit).limit(limit).toArray();
+  
+    console.log(result)
+    return {
+      data:result, 
+      total: res.length
+    }
+  }
 
 export {
     get_db, 
@@ -78,4 +100,5 @@ export {
     db_bili, 
     db_json,
     mids,
+    get_cids_items,
 }

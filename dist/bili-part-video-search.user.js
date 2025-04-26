@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 视频合集标题搜索
 // @namespace    https://github.com/LesslsMore/bili-part-video-search
-// @version      0.1.0
+// @version      0.1.1
 // @author       lesslsmore
 // @description  bilibili 视频合集标题搜索, 分 P 搜索
 // @license      MIT
@@ -17,12 +17,13 @@
 // @require      https://cdn.jsdelivr.net/npm/dexie-export-import@4.1.4/dist/dexie-export-import.min.js
 // @require      https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js
 // @resource     element-plus/dist/index.css  https://cdn.jsdelivr.net/npm/element-plus@2.9.8/dist/index.css
+// @connect      https://lesslsmore-api.vercel.app/*
 // @grant        GM_addStyle
 // @grant        GM_getResourceText
 // @grant        unsafeWindow
 // ==/UserScript==
 
-(e=>{if(typeof GM_addStyle=="function"){GM_addStyle(e);return}const t=document.createElement("style");t.textContent=e,document.head.append(t)})(" .monkey-el-select-popper[data-v-7754cf6b]{z-index:10001!important} ");
+(t=>{if(typeof GM_addStyle=="function"){GM_addStyle(t);return}const a=document.createElement("style");a.textContent=t,document.head.append(a)})(" .search-fab-wrapper[data-v-ac2e5c92]{position:fixed;left:10px;bottom:50px;z-index:9999;width:40px;height:40px;display:flex;align-items:center;justify-content:center;padding:10px}.search-fab[data-v-ac2e5c92]{transform:translate(-25px);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s cubic-bezier(.4,0,.2,1)}.search-fab-wrapper:hover .search-fab[data-v-ac2e5c92]{transform:translate(0);opacity:1}.storage-container[data-v-a8697122]{display:flex;flex-direction:column;gap:10px;width:240px}.storage-row[data-v-a8697122]{display:flex;align-items:center;justify-content:center;margin-bottom:0}.upload-row[data-v-a8697122]{justify-content:flex-start;gap:5px}.setting-fab-wrapper[data-v-0bb163f6]{position:fixed;left:10px;bottom:10px;z-index:9999;width:40px;height:40px;display:flex;align-items:center;justify-content:center;padding:10px}.setting-fab[data-v-0bb163f6]{transform:translate(-25px);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s cubic-bezier(.4,0,.2,1)}.setting-fab-wrapper:hover .setting-fab[data-v-0bb163f6]{transform:translate(0);opacity:1} ");
 
 (function (vue, ElementPlusIconsVue, Dexie, dexieExportImport, fileSaver, axios, ExcelJS, ElementPlus) {
   'use strict';
@@ -91,171 +92,34 @@
     await dexieExportImport.importDB(blob);
     console.log(/* @__PURE__ */ new Date());
   }
+  async function get_cids_items$1(word, page, limit) {
+    console.log(word);
+    const collection = db_bili.cids.orderBy("view").filter((item) => {
+      try {
+        return item.part.text.includes(word);
+      } catch (e) {
+        console.log(e);
+        console.log(item.part);
+      }
+    });
+    const res = await collection.toArray();
+    const result = await collection.reverse().offset((page - 1) * limit).limit(limit).toArray();
+    console.log(result);
+    return {
+      data: result,
+      total: res.length
+    };
+  }
   const db = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
     db_bili,
     db_json,
     export_db,
+    get_cids_items: get_cids_items$1,
     get_db,
     import_db,
     mids
   }, Symbol.toStringTag, { value: "Module" }));
-  const _sfc_main$6 = {
-    __name: "Indexed",
-    setup(__props) {
-      const searchObjRef = vue.ref();
-      let total = vue.ref();
-      let tableData = vue.ref([]);
-      let currentPage4 = vue.ref(1);
-      let pageSize4 = vue.ref(10);
-      let searchObj = vue.ref({
-        name: "",
-        mid: "",
-        bvid: "",
-        part: ""
-      });
-      let keys = vue.ref(
-        {
-          "name": 10,
-          "title.text": 45,
-          "part.text": 45,
-          "page": 8,
-          "view": 8,
-          "duration": 10,
-          "mid": 10,
-          "bvid": 12,
-          "cid": 11,
-          "url": 38
-        }
-      );
-      function sort_data({ prop, order }) {
-        console.log(prop, order);
-      }
-      async function fetchData() {
-        tableData.value = await filter(searchObj.value.name, currentPage4.value, pageSize4.value);
-      }
-      async function filter(word, page, limit) {
-        console.log(word);
-        const collection = db_bili.cids.orderBy("view").filter((item) => {
-          try {
-            return item.part.text.includes(word);
-          } catch (e) {
-            console.log(e);
-            console.log(item.part);
-          }
-        });
-        const res = await collection.toArray();
-        total.value = res.length;
-        const result = await collection.reverse().offset((page - 1) * limit).limit(limit).toArray();
-        console.log(result);
-        return result;
-      }
-      const small = vue.ref(false);
-      const background = vue.ref(false);
-      const disabled = vue.ref(false);
-      const handleSizeChange = (val) => {
-        console.log(`${val} items per page`);
-        fetchData();
-      };
-      const handleCurrentChange = (val) => {
-        console.log(`current page: ${val}`);
-        fetchData();
-      };
-      return (_ctx, _cache) => {
-        const _component_el_input = vue.resolveComponent("el-input");
-        const _component_el_form_item = vue.resolveComponent("el-form-item");
-        const _component_el_button = vue.resolveComponent("el-button");
-        const _component_el_form = vue.resolveComponent("el-form");
-        const _component_el_table_column = vue.resolveComponent("el-table-column");
-        const _component_el_table = vue.resolveComponent("el-table");
-        const _component_el_pagination = vue.resolveComponent("el-pagination");
-        return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
-          vue.createVNode(_component_el_form, {
-            ref_key: "searchObjRef",
-            ref: searchObjRef,
-            style: { "max-width": "600px" },
-            model: vue.unref(searchObj),
-            "status-icon": "",
-            rules: _ctx.rules,
-            "label-width": "auto",
-            class: "demo-ruleForm"
-          }, {
-            default: vue.withCtx(() => [
-              vue.createVNode(_component_el_form_item, { label: "分段视频名称" }, {
-                default: vue.withCtx(() => [
-                  vue.createVNode(_component_el_input, {
-                    modelValue: vue.unref(searchObj).name,
-                    "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => vue.unref(searchObj).name = $event)
-                  }, null, 8, ["modelValue"])
-                ]),
-                _: 1
-              }),
-              vue.createVNode(_component_el_form_item, null, {
-                default: vue.withCtx(() => [
-                  vue.createVNode(_component_el_button, {
-                    type: "primary",
-                    icon: vue.unref(ElementPlusIconsVue.Search),
-                    size: "mini",
-                    onClick: _cache[1] || (_cache[1] = ($event) => fetchData())
-                  }, {
-                    default: vue.withCtx(() => _cache[4] || (_cache[4] = [
-                      vue.createTextVNode("搜索")
-                    ])),
-                    _: 1
-                  }, 8, ["icon"]),
-                  vue.createVNode(_component_el_button, {
-                    icon: vue.unref(ElementPlusIconsVue.Refresh),
-                    size: "mini",
-                    onClick: _ctx.resetData
-                  }, {
-                    default: vue.withCtx(() => _cache[5] || (_cache[5] = [
-                      vue.createTextVNode("重置")
-                    ])),
-                    _: 1
-                  }, 8, ["icon", "onClick"])
-                ]),
-                _: 1
-              })
-            ]),
-            _: 1
-          }, 8, ["model", "rules"]),
-          vue.createVNode(_component_el_table, {
-            data: vue.unref(tableData),
-            border: "",
-            style: { "width": "100%" },
-            onSortChange: sort_data
-          }, {
-            default: vue.withCtx(() => [
-              (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(Object.entries(vue.unref(keys)), ([head, width], index) => {
-                return vue.openBlock(), vue.createBlock(_component_el_table_column, {
-                  sortable: "custom",
-                  key: index,
-                  prop: head,
-                  label: head,
-                  width: width * 10
-                }, null, 8, ["prop", "label", "width"]);
-              }), 128))
-            ]),
-            _: 1
-          }, 8, ["data"]),
-          vue.createVNode(_component_el_pagination, {
-            "current-page": vue.unref(currentPage4),
-            "onUpdate:currentPage": _cache[2] || (_cache[2] = ($event) => vue.isRef(currentPage4) ? currentPage4.value = $event : currentPage4 = $event),
-            "page-size": vue.unref(pageSize4),
-            "onUpdate:pageSize": _cache[3] || (_cache[3] = ($event) => vue.isRef(pageSize4) ? pageSize4.value = $event : pageSize4 = $event),
-            "page-sizes": [10, 20, 50, 100, 200, 500, 1e3],
-            small: small.value,
-            disabled: disabled.value,
-            background: background.value,
-            layout: "total, sizes, prev, pager, next, jumper",
-            total: vue.unref(total),
-            onSizeChange: handleSizeChange,
-            onCurrentChange: handleCurrentChange
-          }, null, 8, ["current-page", "page-size", "small", "disabled", "background", "total"])
-        ], 64);
-      };
-    }
-  };
   const service = axios.create({
     baseURL: "https://lesslsmore-api.vercel.app/",
     timeout: 15e3
@@ -272,8 +136,10 @@
       }
     });
   }
+  const _hoisted_1$4 = { style: { "display": "flex", "justify-content": "center" } };
+  const _hoisted_2$1 = { style: { "display": "flex", "justify-content": "center" } };
   const _sfc_main$5 = {
-    __name: "Mongo",
+    __name: "Indexed",
     setup(__props) {
       const searchObjRef = vue.ref();
       let total = vue.ref();
@@ -286,6 +152,7 @@
         bvid: "",
         part: ""
       });
+      const dataSource = vue.ref("index");
       let keys = vue.ref(
         {
           "name": 10,
@@ -304,9 +171,15 @@
         console.log(prop, order);
       }
       async function fetchData() {
-        const res = await get_cids_items(searchObj.value.name, currentPage4.value, pageSize4.value);
-        tableData.value = res.data.data;
-        total.value = res.data.total;
+        if (dataSource.value === "mongo") {
+          const res = await get_cids_items(searchObj.value.name, currentPage4.value, pageSize4.value);
+          tableData.value = res.data.data;
+          total.value = res.data.total;
+        } else if (dataSource.value === "index") {
+          let res = await get_cids_items$1(searchObj.value.name, currentPage4.value, pageSize4.value);
+          tableData.value = res.data;
+          total.value = res.total;
+        }
       }
       const small = vue.ref(false);
       const background = vue.ref(false);
@@ -320,63 +193,92 @@
         fetchData();
       };
       return (_ctx, _cache) => {
-        const _component_el_input = vue.resolveComponent("el-input");
+        const _component_el_option = vue.resolveComponent("el-option");
+        const _component_el_select = vue.resolveComponent("el-select");
         const _component_el_form_item = vue.resolveComponent("el-form-item");
+        const _component_el_input = vue.resolveComponent("el-input");
         const _component_el_button = vue.resolveComponent("el-button");
         const _component_el_form = vue.resolveComponent("el-form");
         const _component_el_table_column = vue.resolveComponent("el-table-column");
         const _component_el_table = vue.resolveComponent("el-table");
         const _component_el_pagination = vue.resolveComponent("el-pagination");
         return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
-          vue.createVNode(_component_el_form, {
-            ref_key: "searchObjRef",
-            ref: searchObjRef,
-            style: { "max-width": "600px" },
-            model: vue.unref(searchObj),
-            "status-icon": "",
-            rules: _ctx.rules,
-            "label-width": "auto",
-            class: "demo-ruleForm"
-          }, {
-            default: vue.withCtx(() => [
-              vue.createVNode(_component_el_form_item, { label: "分段视频名称" }, {
-                default: vue.withCtx(() => [
-                  vue.createVNode(_component_el_input, {
-                    modelValue: vue.unref(searchObj).name,
-                    "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => vue.unref(searchObj).name = $event)
-                  }, null, 8, ["modelValue"])
-                ]),
-                _: 1
-              }),
-              vue.createVNode(_component_el_form_item, null, {
-                default: vue.withCtx(() => [
-                  vue.createVNode(_component_el_button, {
-                    type: "primary",
-                    icon: vue.unref(ElementPlusIconsVue.Search),
-                    size: "mini",
-                    onClick: _cache[1] || (_cache[1] = ($event) => fetchData())
-                  }, {
-                    default: vue.withCtx(() => _cache[4] || (_cache[4] = [
-                      vue.createTextVNode("搜索")
-                    ])),
-                    _: 1
-                  }, 8, ["icon"]),
-                  vue.createVNode(_component_el_button, {
-                    icon: vue.unref(ElementPlusIconsVue.Refresh),
-                    size: "mini",
-                    onClick: _ctx.resetData
-                  }, {
-                    default: vue.withCtx(() => _cache[5] || (_cache[5] = [
-                      vue.createTextVNode("重置")
-                    ])),
-                    _: 1
-                  }, 8, ["icon", "onClick"])
-                ]),
-                _: 1
-              })
-            ]),
-            _: 1
-          }, 8, ["model", "rules"]),
+          vue.createElementVNode("div", _hoisted_1$4, [
+            vue.createVNode(_component_el_form, {
+              ref_key: "searchObjRef",
+              ref: searchObjRef,
+              style: { "max-width": "100%" },
+              model: vue.unref(searchObj),
+              "status-icon": "",
+              rules: _ctx.rules,
+              "label-width": "auto",
+              class: "demo-ruleForm",
+              inline: ""
+            }, {
+              default: vue.withCtx(() => [
+                vue.createVNode(_component_el_form_item, { label: "数据来源" }, {
+                  default: vue.withCtx(() => [
+                    vue.createVNode(_component_el_select, {
+                      modelValue: dataSource.value,
+                      "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => dataSource.value = $event),
+                      placeholder: "请选择",
+                      style: { "width": "100px" }
+                    }, {
+                      default: vue.withCtx(() => [
+                        vue.createVNode(_component_el_option, {
+                          label: "index",
+                          value: "index"
+                        }),
+                        vue.createVNode(_component_el_option, {
+                          label: "mongo",
+                          value: "mongo"
+                        })
+                      ]),
+                      _: 1
+                    }, 8, ["modelValue"])
+                  ]),
+                  _: 1
+                }),
+                vue.createVNode(_component_el_form_item, { label: "分段视频名称" }, {
+                  default: vue.withCtx(() => [
+                    vue.createVNode(_component_el_input, {
+                      modelValue: vue.unref(searchObj).name,
+                      "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => vue.unref(searchObj).name = $event),
+                      onKeyup: vue.withKeys(fetchData, ["enter"])
+                    }, null, 8, ["modelValue"])
+                  ]),
+                  _: 1
+                }),
+                vue.createVNode(_component_el_form_item, null, {
+                  default: vue.withCtx(() => [
+                    vue.createVNode(_component_el_button, {
+                      type: "primary",
+                      icon: vue.unref(ElementPlusIconsVue.Search),
+                      size: "mini",
+                      onClick: _cache[2] || (_cache[2] = ($event) => fetchData())
+                    }, {
+                      default: vue.withCtx(() => _cache[5] || (_cache[5] = [
+                        vue.createTextVNode("搜索")
+                      ])),
+                      _: 1
+                    }, 8, ["icon"]),
+                    vue.createVNode(_component_el_button, {
+                      icon: vue.unref(ElementPlusIconsVue.Refresh),
+                      size: "mini",
+                      onClick: _ctx.resetData
+                    }, {
+                      default: vue.withCtx(() => _cache[6] || (_cache[6] = [
+                        vue.createTextVNode("重置")
+                      ])),
+                      _: 1
+                    }, 8, ["icon", "onClick"])
+                  ]),
+                  _: 1
+                })
+              ]),
+              _: 1
+            }, 8, ["model", "rules"])
+          ]),
           vue.createVNode(_component_el_table, {
             data: vue.unref(tableData),
             border: "",
@@ -396,88 +298,22 @@
             ]),
             _: 1
           }, 8, ["data"]),
-          vue.createVNode(_component_el_pagination, {
-            "current-page": vue.unref(currentPage4),
-            "onUpdate:currentPage": _cache[2] || (_cache[2] = ($event) => vue.isRef(currentPage4) ? currentPage4.value = $event : currentPage4 = $event),
-            "page-size": vue.unref(pageSize4),
-            "onUpdate:pageSize": _cache[3] || (_cache[3] = ($event) => vue.isRef(pageSize4) ? pageSize4.value = $event : pageSize4 = $event),
-            "page-sizes": [10, 20, 50, 100, 200, 500, 1e3],
-            small: small.value,
-            disabled: disabled.value,
-            background: background.value,
-            layout: "total, sizes, prev, pager, next, jumper",
-            total: vue.unref(total),
-            onSizeChange: handleSizeChange,
-            onCurrentChange: handleCurrentChange
-          }, null, 8, ["current-page", "page-size", "small", "disabled", "background", "total"])
-        ], 64);
-      };
-    }
-  };
-  const _sfc_main$4 = {
-    __name: "Search",
-    setup(__props) {
-      const dialogVisible = vue.ref(false);
-      const activeTab = vue.ref("Indexed");
-      const openDialog = () => {
-        dialogVisible.value = true;
-      };
-      return (_ctx, _cache) => {
-        const _component_el_button = vue.resolveComponent("el-button");
-        const _component_el_tab_pane = vue.resolveComponent("el-tab-pane");
-        const _component_el_tabs = vue.resolveComponent("el-tabs");
-        const _component_el_dialog = vue.resolveComponent("el-dialog");
-        return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
-          !dialogVisible.value ? (vue.openBlock(), vue.createBlock(_component_el_button, {
-            key: 0,
-            type: "primary",
-            onClick: openDialog,
-            style: { "position": "fixed", "left": "20px", "bottom": "20px", "z-index": "9999" }
-          }, {
-            default: vue.withCtx(() => _cache[2] || (_cache[2] = [
-              vue.createTextVNode(" 搜索 ")
-            ])),
-            _: 1
-          })) : vue.createCommentVNode("", true),
-          vue.createVNode(_component_el_dialog, {
-            modelValue: dialogVisible.value,
-            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => dialogVisible.value = $event),
-            fullscreen: "",
-            top: "40vh",
-            width: "70%",
-            draggable: ""
-          }, {
-            default: vue.withCtx(() => [
-              vue.createVNode(_component_el_tabs, {
-                modelValue: activeTab.value,
-                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => activeTab.value = $event),
-                onTabClick: _ctx.handleTabClick
-              }, {
-                default: vue.withCtx(() => [
-                  vue.createVNode(_component_el_tab_pane, {
-                    label: "Indexed",
-                    name: "Indexed"
-                  }, {
-                    default: vue.withCtx(() => [
-                      activeTab.value === "Indexed" ? (vue.openBlock(), vue.createBlock(_sfc_main$6, { key: 0 })) : vue.createCommentVNode("", true)
-                    ]),
-                    _: 1
-                  }),
-                  vue.createVNode(_component_el_tab_pane, {
-                    label: "Mongo",
-                    name: "Mongo"
-                  }, {
-                    default: vue.withCtx(() => [
-                      activeTab.value === "Mongo" ? (vue.openBlock(), vue.createBlock(_sfc_main$5, { key: 0 })) : vue.createCommentVNode("", true)
-                    ]),
-                    _: 1
-                  })
-                ]),
-                _: 1
-              }, 8, ["modelValue", "onTabClick"])
-            ]),
-            _: 1
-          }, 8, ["modelValue"])
+          vue.createElementVNode("div", _hoisted_2$1, [
+            vue.createVNode(_component_el_pagination, {
+              "current-page": vue.unref(currentPage4),
+              "onUpdate:currentPage": _cache[3] || (_cache[3] = ($event) => vue.isRef(currentPage4) ? currentPage4.value = $event : currentPage4 = $event),
+              "page-size": vue.unref(pageSize4),
+              "onUpdate:pageSize": _cache[4] || (_cache[4] = ($event) => vue.isRef(pageSize4) ? pageSize4.value = $event : pageSize4 = $event),
+              "page-sizes": [10, 20, 50, 100, 200, 500, 1e3],
+              small: small.value,
+              disabled: disabled.value,
+              background: background.value,
+              layout: "total, sizes, prev, pager, next, jumper",
+              total: vue.unref(total),
+              onSizeChange: handleSizeChange,
+              onCurrentChange: handleCurrentChange
+            }, null, 8, ["current-page", "page-size", "small", "disabled", "background", "total"])
+          ])
         ], 64);
       };
     }
@@ -489,15 +325,58 @@
     }
     return target;
   };
+  const _hoisted_1$3 = { class: "search-fab-wrapper" };
+  const _sfc_main$4 = {
+    __name: "Search",
+    setup(__props) {
+      const dialogVisible = vue.ref(false);
+      const openDialog = () => {
+        dialogVisible.value = true;
+      };
+      return (_ctx, _cache) => {
+        const _component_el_button = vue.resolveComponent("el-button");
+        const _component_el_dialog = vue.resolveComponent("el-dialog");
+        return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
+          vue.createElementVNode("div", _hoisted_1$3, [
+            !dialogVisible.value ? (vue.openBlock(), vue.createBlock(_component_el_button, {
+              key: 0,
+              type: "primary",
+              onClick: openDialog,
+              icon: vue.unref(ElementPlusIconsVue.Search),
+              circle: "",
+              plain: "",
+              class: "search-fab"
+            }, null, 8, ["icon"])) : vue.createCommentVNode("", true)
+          ]),
+          vue.createVNode(_component_el_dialog, {
+            modelValue: dialogVisible.value,
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => dialogVisible.value = $event),
+            fullscreen: "",
+            top: "40vh",
+            width: "70%",
+            draggable: ""
+          }, {
+            default: vue.withCtx(() => [
+              vue.createVNode(_sfc_main$5)
+            ]),
+            _: 1
+          }, 8, ["modelValue"])
+        ], 64);
+      };
+    }
+  };
+  const Search = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["__scopeId", "data-v-ac2e5c92"]]);
+  const _hoisted_1$2 = { class: "storage-row upload-row" };
   const _sfc_main$3 = {
     __name: "indexeddb",
     setup(__props) {
       let dbNames = vue.ref([]);
       let selectedDb = vue.ref("");
+      const dbWhiteList = ["bili", "json"];
       vue.onMounted(async () => {
         let databases = await Dexie.getDatabaseNames();
         console.log(databases);
-        dbNames.value = databases;
+        dbNames.value = databases.filter((db2) => dbWhiteList.includes(db2));
         if (dbNames.value.length > 0) selectedDb.value = dbNames.value[0];
       });
       function handleExportDb() {
@@ -512,7 +391,7 @@
         const _component_el_upload = vue.resolveComponent("el-upload");
         const _component_el_option = vue.resolveComponent("el-option");
         const _component_el_select = vue.resolveComponent("el-select");
-        return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
+        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$2, [
           vue.createVNode(_component_el_upload, {
             multiple: "",
             "auto-upload": false,
@@ -522,11 +401,12 @@
           }, {
             default: vue.withCtx(() => [
               vue.createVNode(_component_el_button, {
-                icon: _ctx.Upload,
+                icon: vue.unref(ElementPlusIconsVue.Upload),
+                style: { "width": "70px" },
                 type: "primary"
               }, {
                 default: vue.withCtx(() => _cache[1] || (_cache[1] = [
-                  vue.createTextVNode("import_db")
+                  vue.createTextVNode(" db")
                 ])),
                 _: 1
               }, 8, ["icon"])
@@ -534,12 +414,14 @@
             _: 1
           }, 8, ["on-change"]),
           vue.createVNode(_component_el_button, {
-            icon: _ctx.Download,
+            icon: vue.unref(ElementPlusIconsVue.Download),
             type: "primary",
+            plain: "",
+            style: { "width": "70px" },
             onClick: handleExportDb
           }, {
             default: vue.withCtx(() => _cache[2] || (_cache[2] = [
-              vue.createTextVNode("export_db")
+              vue.createTextVNode("db")
             ])),
             _: 1
           }, 8, ["icon"]),
@@ -547,7 +429,7 @@
             modelValue: vue.unref(selectedDb),
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => vue.isRef(selectedDb) ? selectedDb.value = $event : selectedDb = $event),
             placeholder: "选择数据库名称",
-            style: { "width": "100px", "z-index": "10000" },
+            style: { "width": "70px" },
             "popper-append-to-body": "",
             "popper-class": "monkey-el-select-popper"
           }, {
@@ -562,11 +444,10 @@
             ]),
             _: 1
           }, 8, ["modelValue"])
-        ], 64);
+        ]);
       };
     }
   };
-  const indexeddb = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-7754cf6b"]]);
   async function export_excel() {
     let tb_name = "cids";
     console.log("export_excel...");
@@ -702,11 +583,55 @@
     await db_json[`pages[${mid}]`].put({ pn, json_obj });
     console.log(/* @__PURE__ */ new Date());
   };
-  const _hoisted_1 = { style: { "margin": "10px 0" } };
+  const _hoisted_1$1 = { class: "storage-container" };
+  const _hoisted_2 = { class: "storage-row upload-row" };
+  const _hoisted_3 = { class: "storage-row upload-row" };
+  const _hoisted_4 = { class: "storage-row upload-row" };
+  const _hoisted_5 = {
+    class: "storage-row upload-row",
+    style: { "display": "none" }
+  };
+  const _hoisted_6 = { class: "storage-row upload-row" };
   const _sfc_main$2 = {
     __name: "Storage",
     setup(__props) {
       const midsInput = vue.ref(JSON.stringify(mids));
+      const midsArr = vue.ref(Array.isArray(mids) ? [...mids] : []);
+      vue.watch(midsArr, (arr) => {
+        midsInput.value = JSON.stringify(arr);
+      }, { deep: true });
+      vue.watch(midsInput, (val) => {
+        try {
+          midsArr.value = JSON.parse(val);
+        } catch (e) {
+          midsArr.value = [];
+        }
+        try {
+          window.monkeyMids = JSON.parse(val);
+        } catch (e) {
+          window.monkeyMids = [];
+        }
+      }, { immediate: true });
+      function addCurrentMid() {
+        const url = window.location.href;
+        const match = url.match(/space\.bilibili\.com\/(\d+)/);
+        if (match) {
+          let arr;
+          try {
+            arr = JSON.parse(midsInput.value);
+            if (!Array.isArray(arr)) arr = [];
+          } catch (e) {
+            arr = [];
+          }
+          const mid = Number(match[1]);
+          if (!arr.includes(mid)) {
+            arr.push(mid);
+            midsInput.value = JSON.stringify(arr);
+          }
+        } else {
+          window.ElMessage && window.ElMessage.warning("未检测到mid");
+        }
+      }
       vue.watch(midsInput, (val) => {
         try {
           window.monkeyMids = JSON.parse(val);
@@ -715,148 +640,193 @@
         }
       }, { immediate: true });
       return (_ctx, _cache) => {
-        const _component_el_tag = vue.resolveComponent("el-tag");
-        const _component_el_input = vue.resolveComponent("el-input");
         const _component_el_button = vue.resolveComponent("el-button");
+        const _component_el_option = vue.resolveComponent("el-option");
+        const _component_el_select = vue.resolveComponent("el-select");
         const _component_el_upload = vue.resolveComponent("el-upload");
-        return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
-          vue.createElementVNode("div", _hoisted_1, [
-            vue.createVNode(_component_el_tag, null, {
+        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1$1, [
+          vue.createElementVNode("div", _hoisted_2, [
+            vue.createVNode(_component_el_button, {
+              icon: vue.unref(ElementPlusIconsVue.Plus),
+              plain: "",
+              style: { "width": "70px" },
+              type: "primary",
+              onClick: addCurrentMid
+            }, {
               default: vue.withCtx(() => _cache[2] || (_cache[2] = [
                 vue.createTextVNode("mids")
               ])),
               _: 1
-            }),
-            vue.createVNode(_component_el_input, {
-              modelValue: midsInput.value,
-              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => midsInput.value = $event),
-              placeholder: "请输入 mids 数组，如 [1,2,3]"
-            }, null, 8, ["modelValue"])
+            }, 8, ["icon"]),
+            vue.createVNode(_component_el_select, {
+              modelValue: midsArr.value,
+              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => midsArr.value = $event),
+              multiple: "",
+              "default-first-option": "",
+              placeholder: "请选择或输入mid",
+              style: { "width": "140px" }
+            }, {
+              default: vue.withCtx(() => [
+                (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList(vue.unref(mids), (mid) => {
+                  return vue.openBlock(), vue.createBlock(_component_el_option, {
+                    key: mid,
+                    label: mid,
+                    value: mid
+                  }, null, 8, ["label", "value"]);
+                }), 128))
+              ]),
+              _: 1
+            }, 8, ["modelValue"])
           ]),
-          vue.createVNode(indexeddb),
-          vue.createVNode(_component_el_upload, {
-            multiple: "",
-            "auto-upload": false,
-            accept: ".json",
-            "on-change": vue.unref(import_json_bvids),
-            "show-file-list": false
-          }, {
-            default: vue.withCtx(() => [
-              vue.createVNode(_component_el_button, {
-                icon: vue.unref(ElementPlusIconsVue.Upload),
-                type: "primary"
-              }, {
-                default: vue.withCtx(() => _cache[3] || (_cache[3] = [
-                  vue.createTextVNode("上传 bvids json")
-                ])),
-                _: 1
-              }, 8, ["icon"])
-            ]),
-            _: 1
-          }, 8, ["on-change"]),
-          vue.createVNode(_component_el_upload, {
-            multiple: "",
-            "auto-upload": false,
-            accept: ".json",
-            "on-change": vue.unref(import_json_pages),
-            "show-file-list": false
-          }, {
-            default: vue.withCtx(() => [
-              vue.createVNode(_component_el_button, {
-                icon: vue.unref(ElementPlusIconsVue.Upload),
-                type: "primary"
-              }, {
-                default: vue.withCtx(() => _cache[4] || (_cache[4] = [
-                  vue.createTextVNode("上传 pages json")
-                ])),
-                _: 1
-              }, 8, ["icon"])
-            ]),
-            _: 1
-          }, 8, ["on-change"]),
-          vue.createVNode(_component_el_button, { onClick: vue.unref(vlist2bvids) }, {
-            default: vue.withCtx(() => _cache[5] || (_cache[5] = [
-              vue.createTextVNode("vlist2bvids")
-            ])),
-            _: 1
-          }, 8, ["onClick"]),
-          vue.createVNode(_component_el_button, { onClick: vue.unref(bvids2cids) }, {
-            default: vue.withCtx(() => _cache[6] || (_cache[6] = [
-              vue.createTextVNode("bvids2cids")
-            ])),
-            _: 1
-          }, 8, ["onClick"]),
-          vue.createVNode(_component_el_upload, {
-            "auto-upload": false,
-            accept: ".xlsx, .xls",
-            "on-change": vue.unref(import_excel),
-            "show-file-list": false
-          }, {
-            default: vue.withCtx(() => [
-              vue.createVNode(_component_el_button, {
-                icon: vue.unref(ElementPlusIconsVue.Upload),
-                type: "primary"
-              }, {
-                default: vue.withCtx(() => _cache[7] || (_cache[7] = [
-                  vue.createTextVNode("import_excel")
-                ])),
-                _: 1
-              }, 8, ["icon"])
-            ]),
-            _: 1
-          }, 8, ["on-change"]),
-          vue.createVNode(_component_el_button, {
-            icon: vue.unref(ElementPlusIconsVue.Download),
-            onClick: _cache[1] || (_cache[1] = ($event) => vue.unref(export_excel)())
-          }, {
-            default: vue.withCtx(() => _cache[8] || (_cache[8] = [
-              vue.createTextVNode("export_excel")
-            ])),
-            _: 1
-          }, 8, ["icon"])
-        ], 64);
+          vue.createElementVNode("div", _hoisted_3, [
+            vue.createVNode(_sfc_main$3)
+          ]),
+          vue.createElementVNode("div", _hoisted_4, [
+            vue.createVNode(_component_el_upload, {
+              "auto-upload": false,
+              accept: ".xlsx, .xls",
+              "on-change": vue.unref(import_excel),
+              "show-file-list": false
+            }, {
+              default: vue.withCtx(() => [
+                vue.createVNode(_component_el_button, {
+                  icon: vue.unref(ElementPlusIconsVue.Upload),
+                  style: { "width": "80px" },
+                  type: "primary"
+                }, {
+                  default: vue.withCtx(() => _cache[3] || (_cache[3] = [
+                    vue.createTextVNode("excel")
+                  ])),
+                  _: 1
+                }, 8, ["icon"])
+              ]),
+              _: 1
+            }, 8, ["on-change"]),
+            vue.createVNode(_component_el_button, {
+              icon: vue.unref(ElementPlusIconsVue.Download),
+              plain: "",
+              type: "primary",
+              style: { "width": "80px" },
+              onClick: _cache[1] || (_cache[1] = ($event) => vue.unref(export_excel)())
+            }, {
+              default: vue.withCtx(() => _cache[4] || (_cache[4] = [
+                vue.createTextVNode("excel")
+              ])),
+              _: 1
+            }, 8, ["icon"])
+          ]),
+          vue.createElementVNode("div", _hoisted_5, [
+            vue.createVNode(_component_el_upload, {
+              multiple: "",
+              "auto-upload": false,
+              accept: ".json",
+              "on-change": vue.unref(import_json_bvids),
+              "show-file-list": false
+            }, {
+              default: vue.withCtx(() => [
+                vue.createVNode(_component_el_button, {
+                  icon: vue.unref(ElementPlusIconsVue.Upload),
+                  style: { "width": "80px" },
+                  type: "primary"
+                }, {
+                  default: vue.withCtx(() => _cache[5] || (_cache[5] = [
+                    vue.createTextVNode("bvids")
+                  ])),
+                  _: 1
+                }, 8, ["icon"])
+              ]),
+              _: 1
+            }, 8, ["on-change"]),
+            vue.createVNode(_component_el_upload, {
+              multiple: "",
+              "auto-upload": false,
+              accept: ".json",
+              "on-change": vue.unref(import_json_pages),
+              "show-file-list": false
+            }, {
+              default: vue.withCtx(() => [
+                vue.createVNode(_component_el_button, {
+                  icon: vue.unref(ElementPlusIconsVue.Upload),
+                  style: { "width": "80px" },
+                  type: "primary"
+                }, {
+                  default: vue.withCtx(() => _cache[6] || (_cache[6] = [
+                    vue.createTextVNode("pages")
+                  ])),
+                  _: 1
+                }, 8, ["icon"])
+              ]),
+              _: 1
+            }, 8, ["on-change"])
+          ]),
+          vue.createElementVNode("div", _hoisted_6, [
+            vue.createVNode(_component_el_button, {
+              style: { "width": "80px" },
+              plain: "",
+              type: "primary",
+              onClick: vue.unref(vlist2bvids)
+            }, {
+              default: vue.withCtx(() => _cache[7] || (_cache[7] = [
+                vue.createTextVNode("vlist2bvids")
+              ])),
+              _: 1
+            }, 8, ["onClick"]),
+            vue.createVNode(_component_el_button, {
+              style: { "width": "80px", "margin": "0px" },
+              plain: "",
+              type: "primary",
+              onClick: vue.unref(bvids2cids)
+            }, {
+              default: vue.withCtx(() => _cache[8] || (_cache[8] = [
+                vue.createTextVNode("bvids2cids")
+              ])),
+              _: 1
+            }, 8, ["onClick"])
+          ])
+        ]);
       };
     }
   };
+  const Storage = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-a8697122"]]);
+  const _hoisted_1 = { class: "setting-fab-wrapper" };
   const _sfc_main$1 = {
     __name: "Setting",
     setup(__props) {
-      vue.ref(false);
-      vue.ref("Indexed");
       return (_ctx, _cache) => {
         const _component_el_button = vue.resolveComponent("el-button");
         const _component_el_popover = vue.resolveComponent("el-popover");
-        return vue.openBlock(), vue.createBlock(_component_el_popover, {
-          placement: "bottom",
-          width: 220,
-          trigger: "click"
-        }, {
-          reference: vue.withCtx(() => [
-            vue.createVNode(_component_el_button, {
-              class: "m-2",
-              style: { "position": "fixed", "left": "80px", "bottom": "20px", "z-index": "9999" }
-            }, {
-              default: vue.withCtx(() => _cache[0] || (_cache[0] = [
-                vue.createTextVNode("设置")
-              ])),
-              _: 1
-            })
-          ]),
-          default: vue.withCtx(() => [
-            vue.createVNode(_sfc_main$2)
-          ]),
-          _: 1
-        });
+        return vue.openBlock(), vue.createElementBlock("div", _hoisted_1, [
+          vue.createVNode(_component_el_popover, {
+            placement: "bottom",
+            width: 250,
+            trigger: "click"
+          }, {
+            reference: vue.withCtx(() => [
+              vue.createVNode(_component_el_button, {
+                class: "setting-fab",
+                icon: vue.unref(ElementPlusIconsVue.Setting),
+                plain: "",
+                type: "primary",
+                circle: ""
+              }, null, 8, ["icon"])
+            ]),
+            default: vue.withCtx(() => [
+              vue.createVNode(Storage)
+            ]),
+            _: 1
+          })
+        ]);
       };
     }
   };
+  const Setting = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-0bb163f6"]]);
   const _sfc_main = {
     __name: "App",
     setup(__props) {
       return (_ctx, _cache) => {
         return vue.openBlock(), vue.createElementBlock(vue.Fragment, null, [
-          vue.createVNode(_sfc_main$4),
-          vue.createVNode(_sfc_main$1)
+          vue.createVNode(Search),
+          vue.createVNode(Setting)
         ], 64);
       };
     }

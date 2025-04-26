@@ -12,7 +12,7 @@ export default defineConfig({
       userscript: {
         name: 'bilibili 视频合集标题搜索',
         namespace: 'https://github.com/LesslsMore/bili-part-video-search',
-        version: '0.1.0',
+        version: '0.1.1',
         author: 'lesslsmore',
         license: 'MIT',
         description: 'bilibili 视频合集标题搜索, 分 P 搜索',
@@ -20,6 +20,9 @@ export default defineConfig({
         match: [
           'https://space.bilibili.com/*',
         ],
+        connect: [
+          'https://lesslsmore-api.vercel.app/*'
+        ]
       },
       build: {
         externalGlobals: {

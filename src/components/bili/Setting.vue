@@ -1,29 +1,52 @@
 <template>
+  <div class="setting-fab-wrapper">
     <el-popover
-    placement="bottom"
-    :width="220"
-    trigger="click"
-  >
-    <Storage/>
+      placement="bottom"
+      :width="250"
+      trigger="click"
+    >
+      <Storage/>
       <!-- <Search/> -->
-    <template #reference>
-      <el-button class="m-2"
-      style="position:fixed;left:80px;bottom:20px;z-index:9999;"
-      >设置</el-button>
-    </template>
-  </el-popover>
+      <template #reference>
+        <el-button 
+            class="setting-fab"
+            :icon="Setting"
+            plain
+            type="primary"
+            circle>
+        </el-button>
+      </template>
+    </el-popover>
+  </div>
 </template>
 
 <script setup>
-import Indexed from '@/components/bili/Indexed.vue';
-import Mongo from '@/components/bili/Mongo.vue';
 import { ref } from 'vue';
 import Storage from '@/components/bili/Storage.vue';
-import Search from '@/components/bili/Search.vue';
-const dialogVisible = ref(false);
-const activeTab = ref('Indexed');
-
-const openDialog = () => {
-  dialogVisible.value = true;
-};
+import { Setting } from '@element-plus/icons-vue';
 </script>
+
+<style scoped>
+.setting-fab-wrapper {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 鼠标移入区域更宽松 */
+  padding: 10px;
+}
+.setting-fab {
+  transform: translateX(-25px);
+  /* opacity: 0.6; */
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s cubic-bezier(.4,0,.2,1);
+}
+.setting-fab-wrapper:hover .setting-fab {
+  transform: translateX(0);
+  opacity: 1;
+}
+</style>
